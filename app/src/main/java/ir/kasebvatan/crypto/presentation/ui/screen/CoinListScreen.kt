@@ -8,69 +8,94 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import ir.kasebvatan.crypto.domain.model.Coin
-import ir.kasebvatan.crypto.domain.model.Resource
 import ir.kasebvatan.crypto.presentation.ui.theme.CryptoTheme
 import ir.kasebvatan.crypto.presentation.viewmodel.CoinListViewModel
-
 
 @Composable
 fun CoinListScreen(
     onCoinClick: (String) -> Unit = {},
     viewModel: CoinListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val coins = viewModel.coinsPaged.collectAsLazyPagingItems()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val currentState = state) {
-            is Resource.Loading -> {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+            items(
+                count = coins.itemCount,
+                key = coins.itemKey { it.id }
+            ) { index ->
+                val coin = coins[index]
+                coin?.let {
+                    CoinListItem(
+                        coin =  coin,
+                        onCoinClick = onCoinClick
+                    )
+                }
+
+            }
+
+            when (coins.loadState.append) {
+                is LoadState.Loading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                is LoadState.Error -> {
+                    item {
+                        Text(
+                            text = "Error loading more coins",
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+        }
+
+        when (coins.loadState.refresh) {
+            is LoadState.Loading -> {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
 
-            is Resource.Success -> {
-                val coins = currentState.data ?: emptyList()
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(coins) { coin ->
-                        CoinListItem(
-                            coin = coin
-                        ) { id ->
-                            onCoinClick(id)
-                        }
-                    }
-                }
-            }
-
-            is Resource.Error -> {
+            is LoadState.Error -> {
                 Text(
-                    text = currentState.message ?: "Unknown error",
+                    text = "Error loading coins",
                     color = Color.Red,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
+
+            else -> {}
         }
     }
-
 }
 
 @Composable
