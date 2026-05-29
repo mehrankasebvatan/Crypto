@@ -2,6 +2,7 @@ package ir.kasebvatan.crypto.presentation.ui.screen
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import ir.kasebvatan.crypto.presentation.viewmodel.CoinListViewModel
 
 @Composable
 fun CoinListScreen(
+    onCoinClick: (String) -> Unit = {},
     viewModel: CoinListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -40,14 +43,20 @@ fun CoinListScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+
             is Resource.Success -> {
                 val coins = currentState.data ?: emptyList()
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(coins) { coin ->
-                        CoinListItem(coin = coin)
+                        CoinListItem(
+                            coin = coin
+                        ) { id ->
+                            onCoinClick(id)
+                        }
                     }
                 }
             }
+
             is Resource.Error -> {
                 Text(
                     text = currentState.message ?: "Unknown error",
@@ -65,8 +74,14 @@ fun CoinListScreen(
 }
 
 @Composable
-fun CoinListItem(coin: Coin) {
-    androidx.compose.material3.ListItem(
+fun CoinListItem(
+    coin: Coin,
+    onCoinClick: (String) -> Unit
+) {
+    ListItem(
+        modifier = Modifier.clickable {
+            onCoinClick(coin.id)
+        },
         headlineContent = {
             Text(text = "${coin.marketCapRank}. ${coin.name}")
         },
