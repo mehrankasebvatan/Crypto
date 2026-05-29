@@ -1,0 +1,29 @@
+package ir.kasebvatan.crypto.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import ir.kasebvatan.crypto.domain.model.Coin
+import ir.kasebvatan.crypto.domain.model.Resource
+import ir.kasebvatan.crypto.domain.usecase.GetCoinsUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
+
+class CoinListViewModel @Inject constructor(
+    private val getCoinsUseCase: GetCoinsUseCase
+) : ViewModel() {
+    private val _state = MutableStateFlow<Resource<List<Coin>>>(Resource.Loading())
+    val state: StateFlow<Resource<List<Coin>>> = _state
+
+    init {
+        getCoins()
+    }
+
+    private fun getCoins() {
+        getCoinsUseCase().onEach { result ->
+            _state.value = result
+        }.launchIn(viewModelScope)
+    }
+}
