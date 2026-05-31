@@ -15,7 +15,6 @@ room = "2.7.1"
 lifecycle = "2.8.3"
 coroutines = "1.11.0"
 coil = "2.7.0"
-paging = "3.3.0"
 navigation = "2.7.7"
 
 [libraries]
@@ -61,10 +60,6 @@ navigation = { group = "androidx.navigation", name = "navigation-compose", versi
 
 # Coil
 coil = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-
-# Paging
-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

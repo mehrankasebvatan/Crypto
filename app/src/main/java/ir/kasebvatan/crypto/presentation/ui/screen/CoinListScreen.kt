@@ -4,25 +4,31 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import ir.kasebvatan.crypto.domain.model.Coin
+import ir.kasebvatan.crypto.domain.model.Resource
 import ir.kasebvatan.crypto.presentation.ui.theme.CryptoTheme
 import ir.kasebvatan.crypto.presentation.viewmodel.CoinListViewModel
 
@@ -31,69 +37,59 @@ fun CoinListScreen(
     onCoinClick: (String) -> Unit = {},
     viewModel: CoinListViewModel = hiltViewModel()
 ) {
-    val coins = viewModel.coinsPaged.collectAsLazyPagingItems()
+    val state by viewModel.state.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
 
-            items(
-                count = coins.itemCount,
-                key = coins.itemKey { it.id }
-            ) { index ->
-                val coin = coins[index]
-                coin?.let {
-                    CoinListItem(
-                        coin =  coin,
-                        onCoinClick = onCoinClick
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::onSearchQueryChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text("Search coins...") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search"
+                )
+            },
+            singleLine = true
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (val currentState = state) {
+                is Resource.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
-            }
-
-            when (coins.loadState.append) {
-                is LoadState.Loading -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                is Resource.Success -> {
+                    val coins = currentState.data ?: emptyList()
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(coins.size) { index ->
+                            CoinListItem(
+                                coin = coins[index],
+                                onCoinClick = onCoinClick
+                            )
                         }
                     }
                 }
 
-                is LoadState.Error -> {
-                    item {
-                        Text(
-                            text = "Error loading more coins",
-                            color = Color.Red,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
+                is Resource.Error -> {
+                    Text(
+                        text = currentState.message ?: "Unknown error",
+                        color = Color.Red,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .align(Alignment.Center)
+                    )
                 }
-
-                else -> {}
             }
-        }
-
-        when (coins.loadState.refresh) {
-            is LoadState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            is LoadState.Error -> {
-                Text(
-                    text = "Error loading coins",
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            else -> {}
         }
     }
 }
