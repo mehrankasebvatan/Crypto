@@ -9,7 +9,9 @@ A modern Android application for tracking cryptocurrency prices in real-time, bu
 <p align="center">
   <img src="/art/sc_01.png" width="220"/>
   <img src="/art/sc_02.png" width="220"/>
-  <img src="/art/sc_03.png" width="220"/>
+</p>
+<p align="center">
+   <img src="/art/sc_03.png" width="220"/>
   <img src="/art/sc_04.png" width="220"/>
 </p>
 
